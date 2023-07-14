@@ -4,29 +4,21 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
 
-// Configure routes.
-final _router = Router()
-  ..get('/', _rootHandler)
-  ..get('/echo/<message>', _echoHandler);
-
-Response _rootHandler(Request req) {
-  return Response.ok('Hello, World!\n');
-}
-
-Response _echoHandler(Request request) {
-  final message = request.params['message'];
-  return Response.ok('$message\n');
-}
+import 'models/user/user_routes.dart';
 
 void main(List<String> args) async {
-  // Use any available host or container IP (usually `0.0.0.0`).
-  final ip = InternetAddress.anyIPv4;
+  final app = Router();
 
-  // Configure a pipeline that logs requests.
-  final handler = Pipeline().addMiddleware(logRequests()).addHandler(_router);
+  app.mount("/api/users", UserAPI().router);
 
-  // For running in containers, we respect the PORT environment variable.
+  app.get("/api", (Request request) {
+    return Response(HttpStatus.ok, body: "SERVER ONLINE");
+  });
+
+  final handler = Pipeline().addMiddleware(logRequests()).addHandler(app);
+
   final port = int.parse(Platform.environment['PORT'] ?? '8080');
-  final server = await serve(handler, ip, port);
+  final server = await serve(handler, '0.0.0.0', port);
+
   print('Server listening on port ${server.port}');
 }
