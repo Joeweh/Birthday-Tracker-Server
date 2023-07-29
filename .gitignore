@@ -3,3 +3,5 @@
 .dart_tool/
 .idea/
 *.iml
+.env
+*.http

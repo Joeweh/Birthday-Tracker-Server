@@ -1,33 +1,28 @@
-import '../dao.dart';
+import '../../utils/crypto.dart';
+import '../../utils/db.dart';
+import '../../utils/uid.dart';
+import 'user.dart';
 
-class UserService implements DAO {
-  @override
-  Future<String> getAll() {
-    // TODO: implement getAll
-    throw UnimplementedError();
+class UserService {
+  final Database _db = Database.getInstance();
+
+  Future<User> login(String email, String password) async {
+    var query = await _db.pool.prepare("SELECT * FROM users WHERE email=? AND pw_hash=?");
+
+    var resultSet = await query.execute(["test@gmail.com", Cryptographer.hashPassword("test_pw")]);
+
+    await query.deallocate();
+
+    User user = User.fromJson(resultSet.rows.single.typedAssoc());
+
+    return user;
   }
 
-  @override
-  Future<String> getById(String id) {
-    // TODO: implement getById
-    throw UnimplementedError();
-  }
+  Future<void> register(String email, String password) async {
+    var query = await _db.pool.prepare("INSERT INTO users VALUES(?, ?, ?)");
 
-  @override
-  Future<void> save(String json) {
-    // TODO: implement save
-    throw UnimplementedError();
-  }
+    await query.execute([UID.generate(), email, Cryptographer.hashPassword(password)]);
 
-  @override
-  Future<void> updateById(String json) {
-    // TODO: implement updateById
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> deleteById(String id) {
-    // TODO: implement deleteById
-    throw UnimplementedError();
+    await query.deallocate();
   }
 }

@@ -8,6 +8,8 @@ import 'models/user/user_routes.dart';
 
 void main(List<String> args) async {
   final app = Router();
+  final port = int.parse(Platform.environment['PORT'] ?? '8080');
+  final handler = Pipeline().addMiddleware(logRequests()).addHandler(app);
 
   app.mount("/api/users", UserAPI().router);
 
@@ -15,9 +17,6 @@ void main(List<String> args) async {
     return Response(HttpStatus.ok, body: "SERVER ONLINE");
   });
 
-  final handler = Pipeline().addMiddleware(logRequests()).addHandler(app);
-
-  final port = int.parse(Platform.environment['PORT'] ?? '8080');
   final server = await serve(handler, '0.0.0.0', port);
 
   print('Server listening on port ${server.port}');
