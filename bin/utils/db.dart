@@ -2,12 +2,12 @@ import 'package:mysql_client/mysql_client.dart';
 
 class Database {
   final pool = MySQLConnectionPool(
-    host: 'localhost',
+    host: 'db4free.net',
     port: 3306,
-    userName: 'root',
-    password: 'joeyqsa',
+    userName: 'joeyqsa',
+    password: 'obeseclown211',
     maxConnections: 10,
-    databaseName: 'mydb'
+    databaseName: 'bdaydb'
   );
 
   /* ================= */
