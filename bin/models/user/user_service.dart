@@ -9,7 +9,7 @@ class UserService {
   Future<User> login(String email, String password) async {
     var query = await _db.pool.prepare("SELECT * FROM users WHERE email=? AND pw_hash=?");
 
-    var resultSet = await query.execute(["test@gmail.com", Cryptographer.hashPassword("test_pw")]);
+    var resultSet = await query.execute(["test1@gmail.com", Cryptographer.hashPassword("test_pw1")]);
 
     await query.deallocate();
 

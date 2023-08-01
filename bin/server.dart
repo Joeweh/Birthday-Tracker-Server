@@ -9,7 +9,9 @@ import 'models/user/user_routes.dart';
 void main(List<String> args) async {
   final app = Router();
   final port = int.parse(Platform.environment['PORT'] ?? '8080');
-  final handler = Pipeline().addMiddleware(logRequests()).addHandler(app);
+  final handler = Pipeline()
+      .addMiddleware(logRequests())
+      .addHandler(app);
 
   app.mount("/api/users", UserAPI().router);
 

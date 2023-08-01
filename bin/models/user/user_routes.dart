@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
+import '../../utils/auth.dart';
 import 'user.dart';
 import 'user_service.dart';
 
@@ -12,21 +13,30 @@ class UserAPI {
     final router = Router();
     final UserService userService = UserService();
 
-    router.get("/login", (Request req) async {
-      User user = await userService.login("test@gmail.com", "test");
+    router.get(
+        "/login",
+        Pipeline()
+            .addMiddleware(Auth.verify())
+            .addHandler((request) async {
+              User user = await userService.login("test@gmail.com", "test");
+              return Response(HttpStatus.ok, body: jsonEncode(user));
+            })
+    );
 
-      return Response(HttpStatus.ok, body: jsonEncode(user));
-    });
+    router.post(
+        "/register",
+        Pipeline()
+          .addHandler((request) async {
+            final String body = await request.readAsString();
 
-    router.post("/register", (Request req) async {
-      final String body = await req.readAsString();
+            UserDAO userDAO = UserDAO.fromJson(jsonDecode(body));
 
-      UserDAO userDAO = UserDAO.fromJson(jsonDecode(body));
+            await userService.register(userDAO.email, userDAO.password);
 
-      await userService.register(userDAO.email, userDAO.password);
+            return Response(HttpStatus.created);
 
-      return Response(HttpStatus.created);
-    });
+          })
+    );
 
     return router;
   }
