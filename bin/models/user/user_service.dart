@@ -6,12 +6,18 @@ import 'user.dart';
 class UserService {
   final Database _db = Database.getInstance();
 
-  Future<User> login(String email, String password) async {
+  Future<User?> login(String email, String password) async {
+    // ATTEMPT TO GET USER
     var query = await _db.pool.prepare("SELECT * FROM users WHERE email=? AND pw_hash=?");
 
-    var resultSet = await query.execute(["test1@gmail.com", Cryptographer.hashPassword("test_pw1")]);
+    var resultSet = await query.execute([email, Cryptographer.hashPassword(password)]);
 
     await query.deallocate();
+
+    // VERIFY RESULT
+    if (resultSet.rows.length != 1) {
+      return null;
+    }
 
     User user = User.fromJson(resultSet.rows.single.typedAssoc());
 
@@ -24,5 +30,19 @@ class UserService {
     await query.execute([UID.generate(), email, Cryptographer.hashPassword(password)]);
 
     await query.deallocate();
+  }
+
+  Future<bool> changePassword(String id, String newPassword) async {
+    var query = await _db.pool.prepare("UPDATE users SET pw_hash=? WHERE id=?");
+
+    var resultSet = await query.execute([Cryptographer.hashPassword(newPassword), id]);
+
+    await query.deallocate();
+
+    if (resultSet.affectedRows.toInt() == 0) {
+      return false;
+    }
+
+    return true;
   }
 }

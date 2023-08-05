@@ -10,6 +10,8 @@ dependencies:
   args: ^2.3.0
   shelf: ^1.4.0
   crypto: ^3.0.3
+  dotenv: ^4.1.0
+  dart_jsonwebtoken: ^2.8.2
   shelf_router: ^1.1.0
   mysql_client: ^0.0.27
 

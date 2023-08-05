@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
-import '../../utils/auth.dart';
+import '../../utils/jwt.dart';
 import 'user.dart';
 import 'user_service.dart';
 
@@ -13,29 +13,60 @@ class UserAPI {
     final router = Router();
     final UserService userService = UserService();
 
-    router.get(
+    router.post(
         "/login",
         Pipeline()
-            .addMiddleware(Auth.verify())
             .addHandler((request) async {
-              User user = await userService.login("test@gmail.com", "test");
-              return Response(HttpStatus.ok, body: jsonEncode(user));
+              final String body = await request.readAsString();
+
+              UserDAO userDAO = UserDAO.fromJson(jsonDecode(body));
+
+              User? user = await userService.login(userDAO.email, userDAO.password);
+
+              if (user == null) {
+                return Response(HttpStatus.notFound);
+              }
+              
+              Map<String, dynamic> json = {
+                'access_token': JWTUtil.issueAccessToken(user.id),
+                'refreshToken': JWTUtil.issueRefreshToken(user.id)
+              };
+
+              return Response(HttpStatus.ok, body: jsonEncode(json));
             })
     );
 
     router.post(
         "/register",
         Pipeline()
-          .addHandler((request) async {
-            final String body = await request.readAsString();
+            .addHandler((request) async {
+              final String body = await request.readAsString();
 
-            UserDAO userDAO = UserDAO.fromJson(jsonDecode(body));
+              UserDAO userDAO = UserDAO.fromJson(jsonDecode(body));
 
-            await userService.register(userDAO.email, userDAO.password);
+              await userService.register(userDAO.email, userDAO.password);
 
-            return Response(HttpStatus.created);
+              return Response(HttpStatus.created);
+            })
+    );
 
-          })
+    router.put(
+        "/<id>/change-password",
+        Pipeline()
+            .addMiddleware(JWTUtil.verify())
+            .addHandler((request) async {
+              final String body = await request.readAsString();
+
+              String newPassword = jsonDecode(body)["new_password"];
+
+              bool successful = await userService.changePassword(request.params["id"]!, newPassword);
+
+              if (!successful) {
+                return Response(HttpStatus.unprocessableEntity);
+              }
+
+              return Response(HttpStatus.noContent);
+            })
     );
 
     return router;
